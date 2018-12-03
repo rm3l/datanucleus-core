@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -170,10 +171,10 @@ public class ExecutionContextImpl implements ExecutionContext, TransactionEventL
     private final Map<Object, ObjectProvider> enlistedOPCache = new ConcurrentReferenceHashMap<>(1, ReferenceType.STRONG, ReferenceType.WEAK);
 
     /** List of ObjectProviders for all current dirty objects managed by this context. */
-    private final List<ObjectProvider> dirtyOPs = new ArrayList<>();
+    private final Set<ObjectProvider> dirtyOPs = new LinkedHashSet<>();
 
     /** List of ObjectProviders for all current dirty objects made dirty by reachability. */
-    private final List<ObjectProvider> indirectDirtyOPs = new ArrayList<>();
+    private final Set<ObjectProvider> indirectDirtyOPs = new LinkedHashSet<>();
 
     private OperationQueue operationQueue = null;
 
@@ -4059,7 +4060,8 @@ public class ExecutionContextImpl implements ExecutionContext, TransactionEventL
 
             // Retrieve the appropriate flush process, and execute it
             FlushProcess flusher = getStoreManager().getFlushProcess();
-            List<NucleusOptimisticException> optimisticFailures = flusher.execute(this, dirtyOPs, indirectDirtyOPs, operationQueue);
+            List<NucleusOptimisticException> optimisticFailures = flusher.execute(
+                    this, new ArrayList<>(dirtyOPs), new ArrayList<>(indirectDirtyOPs), operationQueue);
 
             if (flushToDatastore)
             {
